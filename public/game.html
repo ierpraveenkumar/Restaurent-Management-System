@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+        body {
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            color: white;
+            font-family: Arial, sans-serif;
+            position: relative;
+        }
+        canvas {
+            border: 1px solid white;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #score {
+            color: white;
+            font-size: 24px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        #message {
+            color: white;
+            font-size: 32px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+        }
+        #restart-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas width="400" height="400" id="game"></canvas>
+    <div id="score">Score badhao bete: 0</div>
+    <div id="message">kya gunda banega re tu!!! Your Score: <span id="final-score">0</span></div>
+    <button id="restart-button">KHEL KHATM!.!Fir Se Khel</button>
+    <script>
+        var canvas = document.getElementById('game');
+        var context = canvas.getContext('2d');
+        var grid = 16;
+        var count = 0;
+        var score = 0;
+        var snake = {
+            x: 160,
+            y: 160,
+            dx: grid,
+            dy: 0,
+            cells: [],
+            maxCells: 4,
+        };
+        var apple = {
+            x: 320,
+            y: 320
+        };
+        var gamePaused = false;
+        var gameRestarted = false;
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function loop() {
+            if (gamePaused) {
+                return;
+            }
+
+            requestAnimationFrame(loop);
+            if (++count < 4) {
+                return;
+            }
+            count = 0;
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            snake.x += snake.dx;
+            snake.y += snake.dy;
+            if (snake.x < 0) {
+                snake.x = canvas.width - grid;
+            } else if (snake.x >= canvas.width) {
+                snake.x = 0;
+            }
+            if (snake.y < 0) {
+                snake.y = canvas.height - grid;
+            } else if (snake.y >= canvas.height) {
+                snake.y = 0;
+            }
+            snake.cells.unshift({ x: snake.x, y: snake.y });
+            if (snake.cells.length > snake.maxCells) {
+                snake.cells.pop();
+            }
+            context.fillStyle = 'red';
+            context.fillRect(apple.x, apple.y, grid - 1, grid - 1);
+            context.fillStyle = 'green';
+            snake.cells.forEach(function (cell, index) {
+                context.fillRect(cell.x, cell.y, grid - 1, grid - 1);
+                if (cell.x === apple.x && cell.y === apple.y) {
+                    snake.maxCells++;
+                    score += 10;
+                    document.getElementById('score').innerHTML = 'Score: ' + score;
+                    apple.x = getRandomInt(0, (canvas.width / grid) - 1) * grid;
+                    apple.y = getRandomInt(0, (canvas.height / grid) - 1) * grid;
+                }
+                for (var i = index + 1; i < snake.cells.length; i++) {
+                    if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+                        // Game over condition
+                        gameOver();
+                        return;
+                    }
+                }
+            });
+        }
+
+        function gameOver() {
+            if (!gameRestarted) {
+                gamePaused = true;
+                document.getElementById('final-score').textContent = score;
+                document.getElementById('message').style.display = 'block';
+            }
+        }
+
+        function resetGame() {
+            gameRestarted = true;
+            gamePaused = false;
+            snake.x = 160;
+            snake.y = 160;
+            snake.cells = [];
+            snake.maxCells = 4;
+            snake.dx = grid;
+            snake.dy = 0;
+            score = 0;
+            document.getElementById('score').innerHTML = 'Score: ' + score;
+            apple.x = getRandomInt(0, (canvas.width / grid) - 1) * grid;
+            apple.y = getRandomInt(0, (canvas.height / grid) - 1) * grid;
+            document.getElementById('message').style.display = 'none';
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (gamePaused) {
+                return;
+            }
+
+            if (e.which === 37 && snake.dx === 0) {
+                snake.dx = -grid;
+                snake.dy = 0;
+            } else if (e.which === 38 && snake.dy === 0) {
+                snake.dy = -grid;
+                snake.dx = 0;
+            } else if (e.which === 39 && snake.dx === 0) {
+                snake.dx = grid;
+                snake.dy = 0;
+            } else if (e.which === 40 && snake.dy === 0) {
+                snake.dy = grid;
+                snake.dx = 0;
+            }
+        });
+
+        window.addEventListener('resize', function () {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        document.getElementById('restart-button').addEventListener('click', function () {
+            if (gamePaused) {
+                resetGame();
+                gameRestarted = false;
+                requestAnimationFrame(loop); // Start the game loop again after restart
+            }
+        });
+
+        requestAnimationFrame(loop);
+    </script>
+</body>
+</html>
+<!-- https://tiny-pavlova-de6c93.netlify.app -->
